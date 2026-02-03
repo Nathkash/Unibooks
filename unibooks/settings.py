@@ -99,6 +99,20 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 # Use WhiteNoise compressed manifest storage in production
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
+# Optional: configure S3 storage for MEDIA files if AWS credentials are provided.
+# This allows using S3 (or compatible storage) for uploaded files in production.
+if os.environ.get('AWS_STORAGE_BUCKET_NAME'):
+    # These packages are optional and must be added to requirements if used
+    # django-storages and boto3
+    DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+    AWS_STORAGE_BUCKET_NAME = os.environ.get('AWS_STORAGE_BUCKET_NAME')
+    AWS_S3_REGION_NAME = os.environ.get('AWS_S3_REGION_NAME', None)
+    AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID')
+    AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY')
+    AWS_S3_CUSTOM_DOMAIN = os.environ.get('AWS_S3_CUSTOM_DOMAIN')
+    # Optional: set this to False to avoid signed URLs for public buckets
+    AWS_QUERYSTRING_AUTH = False
+
 # Media files (uploads)
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'

@@ -14,6 +14,7 @@ urlpatterns = [
     path('subscription-required/', views.subscription_required, name='subscription_required'),
     # Backwards-compatible alias: accept underscore in URL as well
     path('subscription_required/', views.subscription_required),
+    path('health/', views.health, name='health'),
     path('books/', views.book_list, name='book_list'),
     path('books/<int:pk>/', views.book_detail, name='book_detail'),
     path('books/<int:pk>/borrow/', views.request_borrow, name='request_borrow'),

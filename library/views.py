@@ -9,6 +9,7 @@ from django.urls import reverse_lazy
 from .forms import StudentLoginForm, ForcePasswordChangeForm, MissingRequestForm
 from .models import Book, BorrowRequest, Reservation, Like, Comment, Notification, ActionLog
 from django.utils import timezone
+from django.http import HttpResponse
 
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
@@ -312,3 +313,8 @@ def subscription_required(request):
         'subscription_days_left': subscription_days_left,
         'subscription_status': subscription_status,
     })
+
+
+def health(request):
+    """Simple health check endpoint for PaaS health probes."""
+    return HttpResponse('OK', content_type='text/plain')

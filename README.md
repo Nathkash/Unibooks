@@ -60,3 +60,53 @@ Alternatives
 - Pour les environnements conteneurisés, combinez des cron jobs dans un conteneur dédié ou utilisez des services cloud (Cloud Scheduler, RQ Scheduler, etc.).
 
 Voir `bin/cron_example.sh` pour un petit helper qui affiche et installe un exemple de crontab.
+
+Déploiement sur Render
+----------------------
+
+Vous pouvez déployer rapidement UniBooks sur Render pour des tests. Voici une checklist et les étapes recommandées :
+
+1. Variables d'environnement (dans Render → Environment):
+
+	- DJANGO_SECRET_KEY : une clé secrète forte
+	- DJANGO_DEBUG : `0` (ne laissez jamais `1` en production)
+	- DJANGO_ALLOWED_HOSTS : le domaine Render (ou `*` temporaire pour tests)
+	- DATABASE_URL : (optionnel) URL Postgres si vous utilisez une base managée
+	- AWS_STORAGE_BUCKET_NAME, AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY : (optionnel) si vous utilisez S3 pour les médias
+
+2. Build & Start commands :
+
+	- Build Command :
+	  ```bash
+	  pip install -r requirements.txt
+	  python manage.py collectstatic --noinput
+	  python manage.py migrate
+	  ```
+
+	- Start Command :
+	  ```bash
+	  gunicorn unibooks.wsgi --log-file -
+	  ```
+
+3. Fichiers créés dans le repo pour Render :
+
+	- `Procfile` (start command)
+	- `runtime.txt` (pine la version Python)
+	- `render.yaml` (optionnel, infra-as-code minimal)
+
+4. Santé et tâches planifiées :
+
+	- L'application expose `/health/` (200 OK) pour les probes.
+	- Un job cron quotidien `process_subscriptions` est défini dans `render.yaml`.
+
+5. Stockage d'uploads :
+
+	- Pour les tests, SQLite + stockage local peut suffire, mais ce stockage peut être éphémère.
+	- Pour un test plus réaliste, utilisez la base Postgres managée de Render et un bucket S3 pour les médias.
+
+6. Après le déploiement :
+
+	- Connectez-vous à l'admin (`/admin/`), créez un superuser si nécessaire, et changez tout mot de passe par défaut.
+	- Vérifiez les logs et la page `/health/` pour s'assurer que le service est opérationnel.
+
+Si vous voulez que je crée et lie directement un service Render via `render.yaml`, dites‑le et je peux préparer la configuration complète et pousser le repo (vous devrez autoriser Render à accéder à GitHub et confirmer le déploiement dans l'UI Render).
