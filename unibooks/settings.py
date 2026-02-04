@@ -46,6 +46,30 @@ except Exception:
     # avoid raising errors during settings import
     pass
 
+# CSRF trusted origins: allow configuring via DJANGO_CSRF_TRUSTED_ORIGINS
+# (space-separated) or automatically add Railway-provided URLs if present.
+_csrf_vals = os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '')
+if _csrf_vals:
+    CSRF_TRUSTED_ORIGINS = _csrf_vals.split()
+else:
+    CSRF_TRUSTED_ORIGINS = []
+    for host_var in ('RAILWAY_SERVICE_URL', 'RAILWAY_STATIC_URL', 'RAILWAY_APP_URL', 'RAILWAY_URL'):
+        svc = os.environ.get(host_var)
+        if svc:
+            try:
+                from urllib.parse import urlparse
+                parsed = urlparse(svc)
+                if parsed.scheme and parsed.hostname:
+                    origin = f"{parsed.scheme}://{parsed.hostname}"
+                    if origin not in CSRF_TRUSTED_ORIGINS:
+                        CSRF_TRUSTED_ORIGINS.append(origin)
+            except Exception:
+                pass
+
+# If running behind a proxy (Railway), honor X-Forwarded-Proto for secure detection
+# so that CSRF/secure cookies and redirects behave correctly.
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
