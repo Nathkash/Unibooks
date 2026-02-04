@@ -5,7 +5,22 @@ set -euo pipefail
 # This is safe to run on boot and helpful if you prefer migrations at startup.
 
 echo "[start.sh] Running database migrations..."
-python manage.py migrate --noinput
+# Try running migrations with a retry loop. This handles cases where the
+# database service is not immediately reachable (common on PaaS startups).
+MAX_MIGRATE_ATTEMPTS=${DB_MIGRATE_ATTEMPTS:-12}
+SLEEP_SECONDS=${DB_MIGRATE_SLEEP_SECONDS:-5}
+attempt=0
+until python manage.py migrate --noinput; do
+	attempt=$((attempt+1))
+	if [ "$attempt" -ge "$MAX_MIGRATE_ATTEMPTS" ]; then
+		echo "[start.sh] ERROR: migrations failed after $attempt attempts. Exiting."
+		# Print a short hint for platform logs to help debugging
+		echo "[start.sh] HINT: check DATABASE_URL env var and that the Postgres service is available."
+		exit 1
+	fi
+	echo "[start.sh] migrate failed (attempt $attempt/$MAX_MIGRATE_ATTEMPTS). Sleeping ${SLEEP_SECONDS}s before retry..."
+	sleep $SLEEP_SECONDS
+done
 
 echo "[start.sh] Collecting static files..."
 python manage.py collectstatic --noinput
