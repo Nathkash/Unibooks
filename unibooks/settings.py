@@ -12,6 +12,23 @@ DEBUG = os.environ.get('DJANGO_DEBUG', '1') == '1'
 
 ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split() if os.environ.get('DJANGO_ALLOWED_HOSTS') else []
 
+# If deploying on Railway or similar platforms they may inject a service URL
+# in an environment variable (for example RAILWAY_SERVICE_URL). If so, add
+# its hostname to ALLOWED_HOSTS automatically so the app doesn't raise
+# DisallowedHost errors when the platform provides the external URL.
+for host_var in ('RAILWAY_SERVICE_URL', 'RAILWAY_STATIC_URL', 'RAILWAY_APP_URL', 'RAILWAY_URL'):
+    svc = os.environ.get(host_var)
+    if svc:
+        try:
+            from urllib.parse import urlparse
+            parsed = urlparse(svc)
+            hostname = parsed.hostname
+            if hostname and hostname not in ALLOWED_HOSTS:
+                ALLOWED_HOSTS.append(hostname)
+        except Exception:
+            # ignore parse errors and continue
+            pass
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
