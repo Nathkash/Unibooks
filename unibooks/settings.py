@@ -35,6 +35,17 @@ for host_var in ('RAILWAY_SERVICE_URL', 'RAILWAY_STATIC_URL', 'RAILWAY_APP_URL',
 if DEBUG and not ALLOWED_HOSTS:
     ALLOWED_HOSTS = ["*"]
 
+# Small startup log to help debug deployment host issues. This will appear in
+# platform logs (Railway/Gunicorn) so you can confirm which hosts are allowed
+# and whether DEBUG is enabled.
+try:
+    import logging
+    _logger = logging.getLogger('unibooks.startup')
+    _logger.info('startup: DEBUG=%s ALLOWED_HOSTS=%s', DEBUG, ALLOWED_HOSTS)
+except Exception:
+    # avoid raising errors during settings import
+    pass
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
