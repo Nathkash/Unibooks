@@ -10,6 +10,21 @@ echo "[start.sh] Running database migrations..."
 MAX_MIGRATE_ATTEMPTS=${DB_MIGRATE_ATTEMPTS:-12}
 SLEEP_SECONDS=${DB_MIGRATE_SLEEP_SECONDS:-5}
 attempt=0
+# Print a short, safe DB host/port hint (no credentials) to help debug env vars.
+echo "[start.sh] Inspecting DATABASE_URL..."
+python - <<'PY' || true
+import os
+from urllib.parse import urlparse
+u = os.getenv('DATABASE_URL')
+if not u:
+	print('DATABASE_URL: <not set>')
+else:
+	try:
+		p = urlparse(u)
+		print('DATABASE_URL host:', p.hostname, 'port:', p.port)
+	except Exception as e:
+		print('DATABASE_URL parse error:', e)
+PY
 until python manage.py migrate --noinput; do
 	attempt=$((attempt+1))
 	if [ "$attempt" -ge "$MAX_MIGRATE_ATTEMPTS" ]; then
