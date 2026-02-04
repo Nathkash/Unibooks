@@ -29,6 +29,12 @@ for host_var in ('RAILWAY_SERVICE_URL', 'RAILWAY_STATIC_URL', 'RAILWAY_APP_URL',
             # ignore parse errors and continue
             pass
 
+# During development/testing we allow all hosts when DEBUG is True to avoid
+# DisallowedHost errors on temporary URLs (e.g. Railway preview URLs). In
+# production (DEBUG=False) you must set DJANGO_ALLOWED_HOSTS explicitly.
+if DEBUG and not ALLOWED_HOSTS:
+    ALLOWED_HOSTS = ["*"]
+
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
