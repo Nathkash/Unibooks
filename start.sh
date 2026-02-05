@@ -57,5 +57,22 @@ except Exception as e:
 	print('[start.sh] Debug: could not read Django settings.ALLOWED_HOSTS:', repr(e))
 PY
 echo "[start.sh] Starting Gunicorn on 0.0.0.0:${PORT} using ${PYTHON} -m gunicorn..."
+# Optional: create a superuser automatically if env vars are provided.
+# This is convenient for first-time deployments. If you set the following env vars,
+# a superuser will be created (if it does not already exist):
+# DJANGO_SUPERUSER_USERNAME, DJANGO_SUPERUSER_EMAIL, DJANGO_SUPERUSER_PASSWORD
+if [ -n "${DJANGO_SUPERUSER_USERNAME:-}" ] && [ -n "${DJANGO_SUPERUSER_PASSWORD:-}" ]; then
+	echo "[start.sh] Detected DJANGO_SUPERUSER_USERNAME and DJANGO_SUPERUSER_PASSWORD — ensuring superuser exists..."
+	# Run a short Django snippet to create the superuser if it doesn't exist.
+	$PYTHON manage.py shell -c "from django.contrib.auth import get_user_model; User=get_user_model();\
+u=User.objects.filter(username=\"${DJANGO_SUPERUSER_USERNAME}\").first();\
+if not u:\
+	User.objects.create_superuser(username=\"${DJANGO_SUPERUSER_USERNAME}\", email=\"${DJANGO_SUPERUSER_EMAIL:-}\", password=\"${DJANGO_SUPERUSER_PASSWORD}\");\
+	print(\"[start.sh] Superuser created: ${DJANGO_SUPERUSER_USERNAME}\");\
+else:\
+	print(\"[start.sh] Superuser already exists: ${DJANGO_SUPERUSER_USERNAME}\");\
+"
+fi
+
 # Use python -m gunicorn to ensure the gunicorn runner matches the active Python interpreter
 exec $PYTHON -m gunicorn unibooks.wsgi --log-file - --workers 3 --threads 2 --bind 0.0.0.0:${PORT}
