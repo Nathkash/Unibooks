@@ -27,34 +27,83 @@ def media_fallback(request, path):
       (thumbnails or processing) but the DB references a slightly different name.
     - Returns 404 if nothing found.
     """
+    import logging
+    logger = logging.getLogger('library.media_fallback')
+
     full_path = os.path.join(settings.MEDIA_ROOT, path)
     if os.path.exists(full_path):
         mime, _ = mimetypes.guess_type(full_path)
         return FileResponse(open(full_path, 'rb'), content_type=mime or 'application/octet-stream')
 
-    # Try fallback in same directory
+    # Try fallback in same directory with multiple heuristics
     dir_name, filename = os.path.split(path)
     basename, ext = os.path.splitext(filename)
 
-    candidates = []
+    def norms(s):
+        # yield a few normalized variants of s
+        yield s
+        try:
+            import unicodedata
+            nf = unicodedata.normalize('NFKD', s)
+            yield nf
+            # strip diacritics
+            stripped = ''.join(c for c in nf if not unicodedata.combining(c))
+            yield stripped
+        except Exception:
+            pass
+        # common replacements
+        yield s.replace(' ', '_')
+        yield s.replace(' ', '-')
+        yield s.replace("'", '')
+        yield s.lower()
+
+    def strip_suffix_tokens(name):
+        # remove trailing short token patterns like _TWkZG3C or -gHXIxeS
+        import re
+        return re.sub(r'[_-][A-Za-z0-9]{4,}$', '', name)
+
     search_dir = os.path.join(settings.MEDIA_ROOT, dir_name)
+    candidates = []
+
     if os.path.isdir(search_dir):
-        for f in os.listdir(search_dir):
-            if not f:
-                continue
-            if f == filename:
-                continue
-            # match files that start with the same base prefix
-            if f.startswith(basename) or basename.startswith(os.path.splitext(f)[0]):
+        try:
+            files = os.listdir(search_dir)
+        except OSError:
+            files = []
+
+        # First pass: try normalized exact matches (case-sensitive and insensitive)
+        norm_targets = set()
+        for n in norms(basename):
+            norm_targets.add(n + ext)
+            norm_targets.add((n + ext).lower())
+
+        for f in files:
+            if f in norm_targets or f.lower() in {t.lower() for t in norm_targets}:
                 candidates.append(f)
 
+        # Second pass: try stripping suffix tokens
+        if not candidates:
+            stripped = strip_suffix_tokens(basename)
+            if stripped != basename:
+                for f in files:
+                    if f.startswith(stripped):
+                        candidates.append(f)
+
+        # Third pass: substring match (basename contained in filename) - less strict
+        if not candidates:
+            for f in files:
+                if basename.lower() in f.lower():
+                    candidates.append(f)
+
     if candidates:
-        # pick the first reasonable candidate
-        chosen = candidates[0]
+        # prefer the candidate that looks closest (shortest edit heuristic)
+        chosen = sorted(candidates, key=lambda x: abs(len(x) - len(filename)))[0]
         chosen_path = os.path.join(search_dir, chosen)
+        logger.info('media_fallback: serving %s for requested %s', chosen_path, path)
         mime, _ = mimetypes.guess_type(chosen_path)
         return FileResponse(open(chosen_path, 'rb'), content_type=mime or 'application/octet-stream')
 
+    logger.info('media_fallback: no candidate found for %s', path)
     return HttpResponseNotFound(f"Media file not found: {path}")
 
 
