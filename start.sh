@@ -53,6 +53,10 @@ try:
 	from django.conf import settings
 	# Use repr() so we can spot stray quotes or whitespace in values
 	print('[start.sh] Debug: settings.ALLOWED_HOSTS =', repr(getattr(settings, 'ALLOWED_HOSTS', None)))
+	print('[start.sh] Debug: DJANGO_SERVE_MEDIA env var =', repr(os.environ.get('DJANGO_SERVE_MEDIA')))
+	print('[start.sh] Debug: settings.DEBUG =', settings.DEBUG)
+	print('[start.sh] Debug: settings.MEDIA_URL =', repr(getattr(settings, 'MEDIA_URL', None)))
+	print('[start.sh] Debug: settings.MEDIA_ROOT =', repr(getattr(settings, 'MEDIA_ROOT', None)))
 except Exception as e:
 	print('[start.sh] Debug: could not read Django settings.ALLOWED_HOSTS:', repr(e))
 PY
