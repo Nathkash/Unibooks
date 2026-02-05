@@ -43,5 +43,6 @@ $PYTHON manage.py collectstatic --noinput
 
 # Respect the PORT environment variable provided by Railway or other PaaS.
 PORT=${PORT:-8000}
-echo "[start.sh] Starting Gunicorn on 0.0.0.0:${PORT}..."
-exec gunicorn unibooks.wsgi --log-file - --workers 3 --threads 2 --bind 0.0.0.0:${PORT}
+echo "[start.sh] Starting Gunicorn on 0.0.0.0:${PORT} using ${PYTHON} -m gunicorn..."
+# Use python -m gunicorn to ensure the gunicorn runner matches the active Python interpreter
+exec $PYTHON -m gunicorn unibooks.wsgi --log-file - --workers 3 --threads 2 --bind 0.0.0.0:${PORT}
