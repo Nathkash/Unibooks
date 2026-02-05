@@ -5,15 +5,16 @@ set -euo pipefail
 # This script is defensive so it fails with clear messages on missing env or deps.
 
 PYTHON=${PYTHON:-python3}
-PIP=${PIP:-pip3}
 
 echo "[start.sh] Checking for Django..."
 if ! $PYTHON -c "import django" >/dev/null 2>&1; then
 	echo "[start.sh] Django not found. Installing requirements from requirements.txt..."
 	if [ -f requirements.txt ]; then
-		# Upgrade pip first to reduce wheel build issues, then install requirements.
-		$PIP install --upgrade pip setuptools wheel
-		$PIP install -r requirements.txt
+		# Use python -m pip to ensure we call the pip corresponding to the chosen Python
+		echo "[start.sh] Upgrading pip, setuptools and wheel using ${PYTHON} -m pip..."
+		$PYTHON -m pip install --upgrade pip setuptools wheel
+		echo "[start.sh] Installing requirements.txt using ${PYTHON} -m pip..."
+		$PYTHON -m pip install -r requirements.txt
 	else
 		echo "[start.sh] ERROR: requirements.txt not found, cannot install dependencies." >&2
 		exit 1
