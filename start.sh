@@ -43,6 +43,19 @@ $PYTHON manage.py collectstatic --noinput
 
 # Respect the PORT environment variable provided by Railway or other PaaS.
 PORT=${PORT:-8000}
+echo "[start.sh] Debug: raw DJANGO_ALLOWED_HOSTS env var: '${DJANGO_ALLOWED_HOSTS:-}'"
+# Try to print the effective Django settings.ALLOWED_HOSTS if Django can be imported.
+# Don't fail the script if this check can't run; it's purely diagnostic.
+$PYTHON - <<'PY' || true
+import os
+print('[start.sh] Debug: attempting to import Django settings to show effective ALLOWED_HOSTS')
+try:
+	from django.conf import settings
+	# Use repr() so we can spot stray quotes or whitespace in values
+	print('[start.sh] Debug: settings.ALLOWED_HOSTS =', repr(getattr(settings, 'ALLOWED_HOSTS', None)))
+except Exception as e:
+	print('[start.sh] Debug: could not read Django settings.ALLOWED_HOSTS:', repr(e))
+PY
 echo "[start.sh] Starting Gunicorn on 0.0.0.0:${PORT} using ${PYTHON} -m gunicorn..."
 # Use python -m gunicorn to ensure the gunicorn runner matches the active Python interpreter
 exec $PYTHON -m gunicorn unibooks.wsgi --log-file - --workers 3 --threads 2 --bind 0.0.0.0:${PORT}
