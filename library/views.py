@@ -10,6 +10,10 @@ from .forms import StudentLoginForm, ForcePasswordChangeForm, MissingRequestForm
 from .models import Book, BorrowRequest, Reservation, Like, Comment, Notification, ActionLog
 from django.utils import timezone
 from django.http import HttpResponse
+from django.http import FileResponse, Http404, HttpResponseNotFound
+import mimetypes
+import os
+from django.conf import settings
 
 
 @method_decorator(ensure_csrf_cookie, name='dispatch')
@@ -81,6 +85,47 @@ def dashboard(request):
 @login_required
 @ensure_csrf_cookie
 def book_list(request):
+
+    def media_fallback(request, path):
+        """Serve media files with a fallback search when exact filename is missing.
+
+        Behaviour:
+        - If the exact file exists under MEDIA_ROOT/path, serve it.
+        - Otherwise, look for files in the same directory that start with the basename
+          (portion before the first '_' or before a short random suffix) and serve the
+          first match found. This helps when uploaded images have appended tokens
+          (thumbnails or processing) but the DB references a slightly different name.
+        - Returns 404 if nothing found.
+        """
+        full_path = os.path.join(settings.MEDIA_ROOT, path)
+        if os.path.exists(full_path):
+            mime, _ = mimetypes.guess_type(full_path)
+            return FileResponse(open(full_path, 'rb'), content_type=mime or 'application/octet-stream')
+
+        # Try fallback in same directory
+        dir_name, filename = os.path.split(path)
+        basename, ext = os.path.splitext(filename)
+
+        candidates = []
+        search_dir = os.path.join(settings.MEDIA_ROOT, dir_name)
+        if os.path.isdir(search_dir):
+            for f in os.listdir(search_dir):
+                if not f:
+                    continue
+                if f == filename:
+                    continue
+                # match files that start with the same base prefix
+                if f.startswith(basename) or basename.startswith(os.path.splitext(f)[0]):
+                    candidates.append(f)
+
+        if candidates:
+            # pick the first reasonable candidate
+            chosen = candidates[0]
+            chosen_path = os.path.join(search_dir, chosen)
+            mime, _ = mimetypes.guess_type(chosen_path)
+            return FileResponse(open(chosen_path, 'rb'), content_type=mime or 'application/octet-stream')
+
+        return HttpResponseNotFound(f"Media file not found: {path}")
     q = request.GET.get('q', '')
     status = request.GET.get('status')
     books = Book.objects.all()

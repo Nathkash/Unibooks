@@ -39,4 +39,7 @@ urlpatterns = [
 # uploaded MEDIA files by default; for quick deployments we allow enabling
 # media serving in production by setting the env var DJANGO_SERVE_MEDIA=1.
 if settings.DEBUG or os.environ.get('DJANGO_SERVE_MEDIA') == '1':
+    # Add a fallback route for media to try serving similar filenames when exact
+    # matches are missing (helps with variant names created during upload).
+    urlpatterns.insert(0, path('media/<path:path>', library_views.media_fallback))
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
