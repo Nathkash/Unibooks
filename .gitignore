@@ -1,0 +1,53 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+venv/
+.venv/
+env/
+ENV/
+build/
+dist/
+eggs/
+*.egg-info/
+*.egg
+
+# Django
+*.sqlite3
+*.log
+media/
+staticfiles/
+
+# macOS
+.DS_Store
+
+# IDEs
+.vscode/
+.idea/
+
+# Byte-compiled / distribution
+*.egg-info
+pip-wheel-metadata/
+
+# virtualenv
+.venv/
+venv/
+ENV/
+
+# local settings
+local_settings.py
+
+# coverage
+.coverage
+htmlcov/
+
+# pytest
+.pytest_cache/
+
+# node
+node_modules/
+
+# ignore compiled assets produced by build tools
+*.min.js
+*.map
