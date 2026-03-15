@@ -108,5 +108,4 @@ Vous pouvez déployer rapidement UniBooks sur Render pour des tests. Voici une c
 
 	- Connectez-vous à l'admin (`/admin/`), créez un superuser si nécessaire, et changez tout mot de passe par défaut.
 	- Vérifiez les logs et la page `/health/` pour s'assurer que le service est opérationnel.
-
-Si vous voulez que je crée et lie directement un service Render via `render.yaml`, dites‑le et je peux préparer la configuration complète et pousser le repo (vous devrez autoriser Render à accéder à GitHub et confirmer le déploiement dans l'UI Render).
+	
