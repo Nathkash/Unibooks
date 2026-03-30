@@ -7,12 +7,12 @@ from django.conf import settings
 
 
 class Command(BaseCommand):
-    help = 'Send reminders for due or overdue borrowings (can be run from cron)'
+    help = 'Envoyer des rappels pour les emprunts dus ou en retard (peut être exécuté par cron)'
 
     def handle(self, *args, **options):
         today = timezone.now().date()
         soon = today + timedelta(days=3)
-        # due in <=3 days
+        # due est <=3 days
         due_soon = BorrowRequest.objects.filter(status='APPROVED', due_date__lte=soon, due_date__gte=today)
         overdue = BorrowRequest.objects.filter(status='APPROVED', due_date__lt=today)
 
@@ -23,7 +23,7 @@ class Command(BaseCommand):
                 send_mail('Rappel de retour - UniBooks', msg, settings.DEFAULT_FROM_EMAIL, [br.student.email], fail_silently=True)
             except Exception:
                 pass
-            ActionLog.objects.create(actor=None, action=f'Sent due reminder for borrow {br.pk}')
+            ActionLog.objects.create(actor=None, action=f'Rappel de retour envoyé pour l\'emprunt {br.pk}')
 
         for br in overdue:
             msg = f'Attention: votre emprunt pour "{br.book.title}" est en retard depuis le {br.due_date}.'
@@ -32,6 +32,6 @@ class Command(BaseCommand):
                 send_mail('Emprunt en retard - UniBooks', msg, settings.DEFAULT_FROM_EMAIL, [br.student.email], fail_silently=True)
             except Exception:
                 pass
-            ActionLog.objects.create(actor=None, action=f'Sent overdue reminder for borrow {br.pk}')
+            ActionLog.objects.create(actor=None, action=f'Rappel de retour envoyé pour l\'emprunt {br.pk}')
 
-        self.stdout.write(self.style.SUCCESS('Reminders sent.'))
+        self.stdout.write(self.style.SUCCESS('Rappels envoyés.'))

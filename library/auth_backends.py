@@ -6,13 +6,12 @@ UserModel = get_user_model()
 
 
 class MatriculeEmailBackend(ModelBackend):
-    """Authenticate using matricule or email or username."""
+    """Authentification à l'aide du numéro matricul, de l'adresse e-mail ou du nom d'utilisateur."""
 
     def authenticate(self, request, username=None, password=None, **kwargs):
         if username is None:
             username = kwargs.get(UserModel.USERNAME_FIELD)
         try:
-            # try by username
             user = UserModel.objects.filter(username__iexact=username).first()
             if not user and '@' in username:
                 user = UserModel.objects.filter(email__iexact=username).first()

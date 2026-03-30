@@ -17,16 +17,7 @@ from django.conf import settings
 
 
 def media_fallback(request, path):
-    """Serve media files with a fallback search when exact filename is missing.
-
-    Behaviour:
-    - If the exact file exists under MEDIA_ROOT/path, serve it.
-    - Otherwise, look for files in the same directory that start with the basename
-      (portion before the first '_' or before a short random suffix) and serve the
-      first match found. This helps when uploaded images have appended tokens
-      (thumbnails or processing) but the DB references a slightly different name.
-    - Returns 404 if nothing found.
-    """
+    """Diffuser les fichiers multimédias avec une recherche de repli lorsque le nom de fichier exact est manquant.(IA)"""
     import logging
     logger = logging.getLogger('library.media_fallback')
 
@@ -35,30 +26,30 @@ def media_fallback(request, path):
         mime, _ = mimetypes.guess_type(full_path)
         return FileResponse(open(full_path, 'rb'), content_type=mime or 'application/octet-stream')
 
-    # Try fallback in same directory with multiple heuristics
+    # Essayez une solution de repli dans le même répertoire avec plusieurs heuristiques.
     dir_name, filename = os.path.split(path)
     basename, ext = os.path.splitext(filename)
 
     def norms(s):
-        # yield a few normalized variants of s
+        # donner quelques variantes normalisées de s
         yield s
         try:
             import unicodedata
             nf = unicodedata.normalize('NFKD', s)
             yield nf
-            # strip diacritics
+            # supprimer les signes diacritiques
             stripped = ''.join(c for c in nf if not unicodedata.combining(c))
             yield stripped
         except Exception:
             pass
-        # common replacements
+        # remplacements courants
         yield s.replace(' ', '_')
         yield s.replace(' ', '-')
         yield s.replace("'", '')
         yield s.lower()
 
     def strip_suffix_tokens(name):
-        # remove trailing short token patterns like _TWkZG3C or -gHXIxeS
+        # supprimer les motifs de jetons courts de fin comme _TWkZG3C ou -gHXIxeS
         import re
         return re.sub(r'[_-][A-Za-z0-9]{4,}$', '', name)
 
@@ -71,7 +62,7 @@ def media_fallback(request, path):
         except OSError:
             files = []
 
-        # First pass: try normalized exact matches (case-sensitive and insensitive)
+        # Première passe : essayer des correspondances exactes normalisées (sensibles et insensibles à la casse)
         norm_targets = set()
         for n in norms(basename):
             norm_targets.add(n + ext)
@@ -81,7 +72,7 @@ def media_fallback(request, path):
             if f in norm_targets or f.lower() in {t.lower() for t in norm_targets}:
                 candidates.append(f)
 
-        # Second pass: try stripping suffix tokens
+        # Deuxième passe : essayer de supprimer les jetons de suffixe
         if not candidates:
             stripped = strip_suffix_tokens(basename)
             if stripped != basename:
@@ -89,14 +80,14 @@ def media_fallback(request, path):
                     if f.startswith(stripped):
                         candidates.append(f)
 
-        # Third pass: substring match (basename contained in filename) - less strict
+        # Troisième passe : correspondance de sous-chaîne (basename contenu dans le nom de fichier) - moins strict
         if not candidates:
             for f in files:
                 if basename.lower() in f.lower():
                     candidates.append(f)
 
     if candidates:
-        # prefer the candidate that looks closest (shortest edit heuristic)
+        # privilégier le candidat qui ressemble le plus (heuristique de modification la plus courte)
         chosen = sorted(candidates, key=lambda x: abs(len(x) - len(filename)))[0]
         chosen_path = os.path.join(search_dir, chosen)
         logger.info('media_fallback: serving %s for requested %s', chosen_path, path)
@@ -104,9 +95,6 @@ def media_fallback(request, path):
         return FileResponse(open(chosen_path, 'rb'), content_type=mime or 'application/octet-stream')
 
         logger.info('media_fallback: no candidate found for %s', path)
-        # As a last resort, serve a small inline SVG placeholder so the UI shows a
-        # reasonable fallback instead of a broken image. This avoids 404s on the
-        # front-end while you fix persistent storage or re-upload missing files.
         svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="200" height="300">
     <rect width="100%" height="100%" fill="#eeeeee"/>
     <text x="50%" y="50%" dominant-baseline="middle" text-anchor="middle" fill="#777" font-family="Arial,Helvetica,sans-serif" font-size="16">No cover</text>
@@ -116,7 +104,6 @@ def media_fallback(request, path):
 
 
 def health(request):
-    """Lightweight healthcheck endpoint for PaaS probes."""
     return HttpResponse('OK', content_type='text/plain')
 
 
@@ -126,17 +113,14 @@ class StudentLoginView(LoginView):
     authentication_form = StudentLoginForm
     
     def form_valid(self, form):
-        # Before logging in, check subscription status. If expired, show a friendly page
         user = form.get_user()
-        # If user has a payment date but subscription expired, render subscription_required
         if hasattr(user, 'date_paiement') and user.date_paiement and not getattr(user, 'subscription_is_active', False):
-            # Do not log the user in; present a page explaining how to subscribe at the library
             return render(self.request, 'student/subscription_required.html', {'profile_user': user})
         return super().form_valid(form)
 
 
 def home(request):
-    """Home entrypoint: redirect to dashboard if authenticated, else to login."""
+    """Point d'entrée de la page d'accueil."""
     if request.user.is_authenticated:
         return redirect('student:dashboard')
     return redirect('student:login')
@@ -154,7 +138,6 @@ class StudentPasswordChangeView(PasswordChangeView):
 
     def form_valid(self, form):
         response = super().form_valid(form)
-        # unset force flag
         user = self.request.user
         user.force_password_change = False
         user.save()
@@ -172,9 +155,7 @@ def dashboard(request):
     borrows = user.borrow_requests.all()
     reservations = user.reservations.all()
     notifs = user.notifications.order_by('-created_at')[:10]
-    # include a small list of recently added books for the dashboard
     books = Book.objects.order_by('-id')[:8]
-    # Site-wide info editable in admin
     SiteInfo = __import__('library.models', fromlist=['SiteInfo']).SiteInfo
     site_info = SiteInfo.objects.order_by('-updated_at').first()
     return render(request, 'student/dashboard.html', {
@@ -189,7 +170,6 @@ def dashboard(request):
 @login_required
 @ensure_csrf_cookie
 def book_list(request):
-    # ...existing code...
     q = request.GET.get('q', '')
     status = request.GET.get('status')
     books = Book.objects.all()
@@ -229,7 +209,6 @@ def book_detail(request, pk):
 @login_required
 def request_borrow(request, pk):
     book = get_object_or_404(Book, pk=pk)
-    # create borrow request; admin will validate
     BorrowRequest.objects.create(student=request.user, book=book)
     ActionLog = __import__('library.models', fromlist=['ActionLog']).ActionLog
     ActionLog.objects.create(actor=request.user, action=f'Requested borrow for {book.pk}')
@@ -269,11 +248,9 @@ def missing_request(request):
 @login_required
 @ensure_csrf_cookie
 def notifications(request):
-    # Mark unread notifications as read when the user visits the notifications page
     try:
         request.user.notifications.filter(read=False).update(read=True)
     except Exception:
-        # If for some reason the relation or DB is not ready, ignore and continue
         pass
 
     notifs = request.user.notifications.order_by('-created_at')
@@ -308,26 +285,21 @@ def comment_book(request, pk):
 
 @login_required
 def profile(request):
-    """Affiche la page de profil de l'utilisateur (lecture seule)."""
+    """Afficher la page de profil de l'utilisateur (lecture seule)."""
     user = request.user
 
-    # Allow the user to upload/update their avatar from this page
     if request.method == 'POST':
-        # Remove avatar request (button)
         if request.POST.get('remove_avatar'):
             if getattr(user, 'avatar', None):
                 try:
-                    # delete the file from storage
                     user.avatar.delete(save=False)
                 except Exception:
-                    # ignore deletion errors; still clear the field
                     pass
             user.avatar = None
             user.save()
             messages.info(request, 'Photo de profil supprimée.')
             return redirect('student:profile')
 
-        # Upload new avatar (file input auto-submits on change)
         if request.FILES.get('avatar'):
             avatar_file = request.FILES.get('avatar')
             user.avatar = avatar_file
@@ -335,7 +307,6 @@ def profile(request):
             messages.success(request, 'Photo de profil mise à jour.')
             return redirect('student:profile')
 
-    # Account status determination
     if not user.is_active:
         account_status = {'label': '⛔ Désactivé', 'code': 'disabled'}
     elif user.force_password_change:
@@ -343,18 +314,16 @@ def profile(request):
     else:
         account_status = {'label': '✅ Actif', 'code': 'active'}
 
-    # Subscription / library rights (lightweight defaults)
-    # We don't have a subscription model; show placeholders and compute borrow allowance from simple policy.
+    # Abonnement / droits de bibliothèque
     allowed_borrows = 5
     active_borrows_count = BorrowRequest.objects.filter(student=user, status='APPROVED').count()
     remaining_borrows = max(0, allowed_borrows - active_borrows_count)
 
-    # Recent activity: mix of borrow requests, reservations and comments
+    # Activité récente
     borrows_recent = list(user.borrow_requests.order_by('-requested_at')[:5])
     reservations_recent = list(user.reservations.order_by('-reserved_at')[:5])
     comments_recent = list(Comment.objects.filter(student=user).order_by('-created_at')[:5])
 
-    # Merge and sort by timestamp (approx)
     activities = []
     for b in borrows_recent:
         activities.append({'type': 'emprunt', 'when': getattr(b, 'requested_at', timezone.now()), 'text': f"Demande d'emprunt: {b.book.title}", 'obj': b})
@@ -365,7 +334,6 @@ def profile(request):
 
     activities = sorted(activities, key=lambda x: x['when'], reverse=True)[:5]
 
-    # subscription days left
     sub_start = getattr(user, 'date_paiement', None)
     sub_end = getattr(user, 'date_expiration', None) or (user.compute_expiration() if hasattr(user, 'compute_expiration') else None)
     if sub_end:
@@ -377,10 +345,9 @@ def profile(request):
     context = {
         'profile_user': user,
         'account_status': account_status,
-        # Subscription info
-    'date_paiement': sub_start,
-    'date_expiration': sub_end,
-    'subscription_active': getattr(user, 'subscription_is_active', False),
+        'date_paiement': sub_start,
+        'date_expiration': sub_end,
+        'subscription_active': getattr(user, 'subscription_is_active', False),
         'subscription_days_left': subscription_days_left,
         'allowed_borrows': allowed_borrows,
         'active_borrows_count': active_borrows_count,
@@ -391,11 +358,7 @@ def profile(request):
 
 
 def subscription_required(request):
-    """Simple informational page shown when a user's subscription has expired.
-
-    This view is also the redirect target for the middleware.
-    """
-    # If called directly, provide subscription details when possible
+    """Page d'information exipiration d'abonnement."""
     profile_user = None
     if request.user.is_authenticated:
         profile_user = request.user
@@ -408,7 +371,6 @@ def subscription_required(request):
         if subscription_end:
             delta = subscription_end - timezone.now()
             subscription_days_left = max(0, delta.days)
-            # Status: expired if end is in the past
             if subscription_end < timezone.now():
                 subscription_status = 'Expiré'
             else:

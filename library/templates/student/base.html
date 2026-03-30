@@ -3,9 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width,initial-scale=1">
-    
     <title>UniBooks - {% block title %}{% endblock %}</title>
-    
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Merriweather:wght@300;400;700&display=swap" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
@@ -22,7 +20,6 @@
       <div class="ub-header-left">
         <div class="brand">
             <a href="/" class="brand-link">
-            <!-- Logo image restored -->
             <img src="{% static 'images/logo_upc.png' %}" alt="UniBooks" class="brand-logo" />
             <div class="brand-text">
               <span class="brand-name">UniBooks</span>
@@ -50,7 +47,6 @@
                 <span class="visually-hidden">{{ unread_notifications_count }} notifications non lues</span>
               {% endif %}
             </a>
-            <!-- Profile avatar removed from header to keep header minimal; profile remains in sidebar -->
           </div>
         {% else %}
           <a href="{% url 'student:login' %}" class="ub-btn ub-btn--primary">Se connecter</a>
@@ -91,11 +87,7 @@
         <small>Université — Bibliothèque — <strong>UniBooks</strong></small>
       </div>
     </footer>
-
-    <!-- Overlay for mobile sidebar -->
     <div id="overlay" class="ub-overlay" hidden aria-hidden="true"></div>
-
-    <!-- Toast container (notifications) -->
     <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
 
     {% block extra_scripts %}{% endblock %}

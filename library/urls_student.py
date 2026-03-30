@@ -12,7 +12,6 @@ urlpatterns = [
     path('reservations/', views.my_reservations, name='my_reservations'),
     path('profile/', views.profile, name='profile'),
     path('subscription-required/', views.subscription_required, name='subscription_required'),
-    # Backwards-compatible alias: accept underscore in URL as well
     path('subscription_required/', views.subscription_required),
     path('health/', views.health, name='health'),
     path('books/', views.book_list, name='book_list'),

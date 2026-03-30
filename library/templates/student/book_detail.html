@@ -59,7 +59,6 @@
     <h3>Commentaires & Discussions</h3>
   </header>
 
-  <!-- Formulaire principal de commentaire -->
   <div class="comment-form-container card">
     <form method="post" action="{% url 'student:comment_book' book.pk %}" class="ub-form">
       {% csrf_token %}
@@ -73,12 +72,6 @@
     </form>
   </div>
 
-  <!-- Liste des commentaires (imbriquée jusqu'à 2 niveaux)
-       Structure :
-         - comments: top-level (level 0)
-         - for each comment, render replies (level 1)
-         - for each reply, render its replies (level 2) but do NOT allow further replies
-  -->
   <ul class="comments-list" aria-live="polite">
     {% for c in comments %}
       <li class="comment-item" id="comment-{{ c.pk }}">

@@ -1,15 +1,10 @@
 def unread_notifications(request):
-    """Context processor that injects unread notifications count for the current user.
-
-    Returns:
-        dict: { 'unread_notifications_count': int, 'has_unread_notifications': bool }
-    """
+    """Processeur qui injecte le nombre de notifications non lue."""
     user = getattr(request, 'user', None)
     if user and user.is_authenticated:
         try:
             count = user.notifications.filter(read=False).count()
         except Exception:
-            # In case the User model or notifications relation is not ready yet
             count = 0
     else:
         count = 0

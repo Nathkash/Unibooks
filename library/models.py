@@ -7,14 +7,6 @@ from datetime import timedelta
 
 
 class User(AbstractUser):
-    """Custom user for students and staff
-
-    - matricule: unique identifier for students
-    - faculty: department/faculty
-    - phone, address, proof_of_payment
-    - force_password_change: flag to force change at first login
-    - is_librarian: library staff (not necessarily superuser)
-    """
 
     matricule = models.CharField(_('matricule'), max_length=30, unique=True, null=True, blank=True)
     faculty = models.CharField(_('faculté'), max_length=120, blank=True)
@@ -22,46 +14,34 @@ class User(AbstractUser):
     address = models.TextField(_('adresse'), blank=True)
     proof_of_payment = models.FileField(_('preuve de paiement'), upload_to='proofs/', blank=True, null=True)
     avatar = models.ImageField(_('avatar'), upload_to='avatars/', blank=True, null=True)
-    force_password_change = models.BooleanField(_('forcer changement mot de passe'), default=False)
-    is_librarian = models.BooleanField(_('personnel bibliothèque'), default=False)
-    # Date of payment (admin sets this). From this we compute expiration automatically.
+    force_changement_mot_de_passe = models.BooleanField(_('forcer changement mot de passe'), default=False)
+    est_bibliothécaire = models.BooleanField(_('personnel bibliothèque'), default=False)
     date_paiement = models.DateTimeField(_('date de paiement'), null=True, blank=True, help_text=_('Date et heure du paiement (format UTC)'))
-    # Computed expiration date (automatically set from date_paiement). Not editable.
     date_expiration = models.DateTimeField(_('date d\'expiration'), null=True, blank=True, editable=False)
 
     def compute_expiration(self):
-        """Return the expiration datetime (31 days after payment) or None."""
         if not self.date_paiement:
             return None
         return self.date_paiement + timedelta(days=31)
 
     @property
     def subscription_is_active(self):
-        """Derived boolean: True when now < expiration. Never stored or editable."""
         end = self.date_expiration or self.compute_expiration()
         if not end:
             return False
         return timezone.now() < end
 
     def save(self, *args, **kwargs):
-        # Ensure date_expiration is computed from date_paiement and cannot be set manually.
         if self.date_paiement:
             computed = self.compute_expiration()
-            # always update expiration to computed value
             self.date_expiration = computed
         else:
-            # clear expiration when no payment date
             self.date_expiration = None
 
-        # Ensure a technical username exists and is unique. The username is not used
-        # for any business logic and must never be shown in admin; generate it
-        # automatically if missing.
         if not self.username:
-            # Generate a compact candidate and ensure uniqueness
             import uuid
             candidate = f"u{uuid.uuid4().hex[:12]}"
             Model = type(self)
-            # loop until we find a unique username (very unlikely to loop more than once)
             while Model.objects.filter(username=candidate).exists():
                 candidate = f"u{uuid.uuid4().hex[:12]}"
             self.username = candidate
@@ -69,7 +49,6 @@ class User(AbstractUser):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        # Human-friendly representation: prefer 'Prénom Nom (matricule)'
         names = ' '.join(filter(None, [self.first_name, getattr(self, 'post_nom', None), self.last_name])).strip()
         if names:
             if self.matricule:
@@ -81,11 +60,6 @@ class User(AbstractUser):
 
 
 class SiteInfo(models.Model):
-    """Singleton-like model to store small site-wide messages editable from admin.
-
-    Admins can edit the latest SiteInfo instance; the dashboard will display the
-    most recent record (conseil du jour and annonce).
-    """
     conseil_du_jour = models.TextField(_('conseil du jour'), blank=True)
     annonce = models.TextField(_('annonce'), blank=True)
     updated_at = models.DateTimeField(_('mis à jour le'), auto_now=True)
@@ -165,7 +139,7 @@ class MissingRequest(models.Model):
     justification = models.TextField(_('justification'))
     created_at = models.DateTimeField(_('créé le'), auto_now_add=True)
     status = models.CharField(_('statut'), max_length=30, choices=[('OPEN', _('Ouvert')), ('ORDERED', _('Commandé')), ('DENIED', _('Refusé'))], default='OPEN')
-    # Tracking fields for admin handling
+    # Champs de suivi pour la gestion administrative
     handled_by = models.ForeignKey(settings.AUTH_USER_MODEL, verbose_name=_('traité par'), null=True, blank=True, on_delete=models.SET_NULL, related_name='handled_missing_requests')
     handled_at = models.DateTimeField(_('traité le'), null=True, blank=True)
     handled_note = models.TextField(_('note de traitement'), blank=True)

@@ -1,3 +1,19 @@
+"""
+URL configuration for unibooks project.
+
+The `urlpatterns` list routes URLs to views. For more information please see:
+    https://docs.djangoproject.com/en/4.2/topics/http/urls/
+Examples:
+Function views
+    1. Add an import:  from my_app import views
+    2. Add a URL to urlpatterns:  path('', views.home, name='home')
+Class-based views
+    1. Add an import:  from other_app.views import Home
+    2. Add a URL to urlpatterns:  path('', Home.as_view(), name='home')
+Including another URLconf
+    1. Import the include() function: from django.urls import include, path
+    2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
+"""
 from django.contrib import admin
 from django.urls import path, include
 from django.views.generic import RedirectView, TemplateView
@@ -7,13 +23,9 @@ from django.conf.urls.static import static
 import os
 
 urlpatterns = [
-    # quick health endpoint for PaaS probes
     path('healthz', library_views.health),
     path('admin/', admin.site.urls),
-    # compatibility redirect for old custom admin path
     path('library-admin/', RedirectView.as_view(url='/admin/', permanent=False)),
-    # compatibility landing pages for legacy '/student/...' URLs — show a friendly message
-    # and then redirect to the new canonical routes. This looks nicer than an immediate 302.
     path('student/login/', TemplateView.as_view(
         template_name='compat/student_redirect.html',
         extra_context={'target_url': '/login/', 'target_name': 'Connexion', 'seconds': 4}
@@ -30,18 +42,10 @@ urlpatterns = [
         template_name='compat/student_redirect.html',
         extra_context={'target_url': '/subscription_required/', 'target_name': 'Abonnement requis', 'seconds': 4}
     )),
-    # root home: redirect to dashboard if logged in, else to login
     path('', library_views.home, name='home'),
-    # student-facing URLs available at root (e.g. /login/, /books/)
     path('', include(('library.urls_student', 'library'), namespace='student')),
-    # NOTE: removed the duplicate inclusion under '/student/' to avoid namespace ambiguity
 ]
 
-# Serve media files during development. Some PaaS (like Railway) do not serve
-# uploaded MEDIA files by default; for quick deployments we allow enabling
-# media serving in production by setting the env var DJANGO_SERVE_MEDIA=1.
 if settings.DEBUG or os.environ.get('DJANGO_SERVE_MEDIA') == '1':
-    # Add a fallback route for media to try serving similar filenames when exact
-    # matches are missing (helps with variant names created during upload).
     urlpatterns.insert(0, path('media/<path:path>', library_views.media_fallback))
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

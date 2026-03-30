@@ -12,9 +12,7 @@
     {% load static %}
     <main class="auth-page">
       <div class="auth-container">
-        <!-- Left visual / branding panel removed as per request -->
 
-        <!-- Right form panel -->
         <section class="auth-card auth-card-modern" role="region" aria-labelledby="login-title">
           <div class="auth-card-inner">
             <header class="auth-header">
@@ -40,7 +38,6 @@
               {% endif %}
 
               <div class="form-grid">
-                <!-- Username / matricule -->
                 <label class="form-label" for="id_username">Identifiant académique</label>
                 <div class="input-with-icon">
                   <svg class="input-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 12a5 5 0 100-10 5 5 0 000 10zm0 2c-4.418 0-8 2.239-8 5v1h16v-1c0-2.761-3.582-5-8-5z"/></svg>
@@ -59,7 +56,6 @@
                   <span class="field-error" id="error-username">{{ form.username.errors|striptags }}</span>
                 {% endif %}
 
-                <!-- Password -->
                 <label class="form-label" for="id_password">Mot de passe</label>
                 <div class="input-with-icon">
                   <svg class="input-icon" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M17 8V7a5 5 0 00-10 0v1H5v11h14V8h-2zm-8-1a3 3 0 016 0v1H9V7zm8 11H7V10h10v8z"/></svg>

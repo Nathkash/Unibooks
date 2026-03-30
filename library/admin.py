@@ -7,12 +7,11 @@ from django.utils.translation import gettext_lazy as _
 
 @admin.register(User)
 class UserAdmin(BaseUserAdmin):
-    # Remove any exposure of the technical `username` field in admin forms and
-    # searches. Administrators work with human fields only.
+    # Supprission `username` et travail Uniquement avec des champs humains.
     readonly_fields = ('date_expiration',)
 
     def _strip_username_from_fieldsets(self, fieldsets):
-        """Helper: remove 'username' from any fieldset fields tuple."""
+        """Fonction d'assistance : supprimer « username » de tout tuple de champs fieldset."""
         new = []
         for name, opts in fieldsets:
             fields = list(opts.get('fields', ()))
@@ -21,21 +20,17 @@ class UserAdmin(BaseUserAdmin):
         return tuple(new)
 
     def get_fieldsets(self, request, obj=None):
-        # Start from the default BaseUserAdmin fieldsets but drop username
         base = list(super().get_fieldsets(request, obj))
-        # _strip_username_from_fieldsets returns a tuple; convert back to list so
-        # we can append our extra fieldset without raising AttributeError.
         base = list(self._strip_username_from_fieldsets(base))
 
-        # Append UniBooks-specific info
+        # Ajouter de mes informations
         extra = (
             'UniBooks info',
-            {'fields': ('matricule', 'faculty', 'phone', 'address', 'proof_of_payment', 'force_password_change', 'is_librarian', 'date_paiement', 'date_expiration')}
+            {'fields': ('matricule', 'faculty', 'phone', 'address', 'proof_of_payment', 'force_changement_mot_de_passe', 'est_bibliothécaire', 'date_paiement', 'date_expiration')}
         )
         base.append(extra)
         return tuple(base)
 
-    # Also ensure the 'add user' form does not ask for username
     add_fieldsets = (
         (None, {
             'classes': ('wide',),
@@ -43,8 +38,7 @@ class UserAdmin(BaseUserAdmin):
         }),
     )
 
-    # Admin list and search should use human-readable fields only
-    list_display = ('full_name', 'email', 'matricule', 'is_active', 'is_librarian', 'subscription_end_display')
+    list_display = ('full_name', 'email', 'matricule', 'is_active', 'est_bibliothécaire', 'subscription_end_display')
     search_fields = ('first_name', 'last_name', 'matricule', 'email', 'phone')
 
     def full_name(self, obj):
@@ -52,13 +46,12 @@ class UserAdmin(BaseUserAdmin):
     full_name.short_description = _('Nom complet')
 
     def subscription_end_display(self, obj):
-        # Prefer stored expiration; fall back to computed expiration
         end = getattr(obj, 'date_expiration', None) or (obj.compute_expiration() if hasattr(obj, 'compute_expiration') else None)
         return end.strftime('%Y-%m-%d') if end else '-'
     subscription_end_display.short_description = 'Abonnement se termine'
 
 
-# Translate admin site titles to French
+# Traduction en français
 admin.site.site_header = _('Administration UniBooks')
 admin.site.site_title = _('UniBooks admin')
 admin.site.index_title = _('Bienvenue sur l\'administration UniBooks')
@@ -89,7 +82,7 @@ class MissingRequestAdmin(admin.ModelAdmin):
     actions = ('mark_as_handled',)
 
     def mark_as_handled(self, request, queryset):
-        """Admin action to mark selected requests as handled by the current admin user."""
+        """Action de l'administrateur permettant de marquer les demandes sélectionnées comme étant traitées par l'utilisateur administrateur actuel."""
         from django.utils import timezone
         count = 0
         for obj in queryset:

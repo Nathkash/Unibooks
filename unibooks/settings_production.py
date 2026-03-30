@@ -1,14 +1,3 @@
-"""
-Production settings for UniBooks.
-
-Copy this file to `unibooks/settings_production.py` (do NOT commit secrets).
-Set DJANGO_SETTINGS_MODULE=unibooks.settings_production in your production env
-or rely on `start.sh` which will default to this settings module if not set.
-
-This file prefers a DATABASE_URL environment variable (Railway provides one).
-If DATABASE_URL is not provided it will fall back to individual POSTGRES_* vars.
-"""
-
 import os
 from .settings import *  # noqa: F401,F403
 

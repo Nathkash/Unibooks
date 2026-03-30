@@ -19,7 +19,6 @@
             {% csrf_token %}
             <label class="ub-btn ub-btn--ghost" for="id_avatar">Changer la photo</label>
             <input id="id_avatar" name="avatar" type="file" accept="image/*" style="display:none;">
-            <!-- Upload is auto-submitted when a file is picked; no "Enregistrer" button needed -->
           </form>
 
           {% if profile_user.avatar %}
@@ -175,7 +174,6 @@ document.addEventListener('DOMContentLoaded', function(){
   if (input) {
     input.addEventListener('change', function(){
       if (this.files && this.files.length > 0) {
-        // submit the parent form (upload form)
         var form = this.closest('form');
         if (form) form.submit();
       }

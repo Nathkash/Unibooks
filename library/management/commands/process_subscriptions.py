@@ -7,13 +7,13 @@ from django.contrib.sessions.models import Session
 
 
 class Command(BaseCommand):
-    help = "Process managed subscriptions: send reminder at 26 days, expire at 31 days"
+    help = "Gestion des abonnements : envoi d’un rappel à 26 jours, expiration à 31 jours"
 
     def handle(self, *args, **options):
         now = timezone.now()
         users = User.objects.exclude(date_paiement__isnull=True)
         if not users.exists():
-            self.stdout.write('No subscriptions with payment date found.')
+            self.stdout.write('Aucun abonnement avec date de paiement trouvé.')
             return
 
         for u in users:
@@ -21,13 +21,11 @@ class Command(BaseCommand):
                 continue
             days = (now - u.date_paiement).days
 
-            # Expire after 31 days
+            # Expire après 31 jours
             if days >= 31:
-                # Expire access at 31 days: mark account inactive and persist
                 if u.is_active:
                     u.is_active = False
                     u.save()
-                    # Invalidate any active sessions for the user so they are logged out
                     try:
                         sessions = Session.objects.all()
                         for s in sessions:
@@ -35,7 +33,6 @@ class Command(BaseCommand):
                             if str(data.get('_auth_user_id')) == str(u.pk):
                                 s.delete()
                     except Exception:
-                        # don't let session cleanup break the command
                         pass
 
                 Notification.objects.create(
@@ -43,11 +40,11 @@ class Command(BaseCommand):
                     message="Votre abonnement de 31 jours est arrivé à expiration. Votre accès a été suspendu. Veuillez renouveler au guichet.",
                     type='subscription_expired'
                 )
-                ActionLog.objects.create(actor=None, action=f"Auto-expired subscription for {u.username}", extra={'days': days})
-                self.stdout.write(self.style.WARNING(f"Expired: {u.username} (days={days})"))
+                ActionLog.objects.create(actor=None, action=f"Abonnement à expiration automatique pour {u.username}", extra={'days': days})
+                self.stdout.write(self.style.WARNING(f"Expiré: {u.username} (jours={days})"))
                 continue
 
-            # Send reminder at 26 days (only once within a 10-day window)
+            # Envoyer un rappel au bout de 26 jours
             if 26 <= days < 31:
                 window_start = now - timedelta(days=10)
                 already = u.notifications.filter(type='subscription_reminder', created_at__gte=window_start).exists()
@@ -58,11 +55,10 @@ class Command(BaseCommand):
                         message=f"Rappel : votre abonnement expire dans {days_left} jour(s). Pensez à le renouveler au guichet.",
                         type='subscription_reminder'
                     )
-                    ActionLog.objects.create(actor=None, action=f"Sent subscription reminder to {u.username}", extra={'days_left': days_left})
-                    self.stdout.write(self.style.SUCCESS(f"Reminder sent: {u.username} (days={days}, days_left={days_left})"))
+                    ActionLog.objects.create(actor=None, action=f"J'ai envoyé un rappel d'abonnement à {u.username}", extra={'days_left': days_left})
+                    self.stdout.write(self.style.SUCCESS(f"Rappel envoyé : {u.username} (jours={days}, jours_restants={days_left})"))
                 else:
-                    self.stdout.write(f"Reminder already sent recently: {u.username}")
+                    self.stdout.write(f"Rappel déjà envoyé récemment : {u.username}")
                 continue
 
-            # Otherwise no action
-            self.stdout.write(f"No action for {u.username} (days={days})")
+            self.stdout.write(f"Aucune action pour {u.username} (jours={days})")

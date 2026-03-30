@@ -7,7 +7,6 @@
   <p class="page-subtitle">Restez informé de l'état de vos emprunts et réservations.</p>
 </header>
 
-<!-- Utilise la même structure/présentation que la page "Mes emprunts" -->
 <section class="borrows-section">
   <div class="borrows-list-container">
     {% for n in notifications %}
@@ -36,7 +35,6 @@
             <span class="unread-badge">Nouveau</span>
           {% endif %}
 
-          <!-- Action de consultation si la notification a une URL (optionnel) -->
           {% if n.extra and n.extra.link %}
             <a href="{{ n.extra.link }}" class="ub-btn ub-btn--ghost btn-link-action">Consulter</a>
           {% endif %}

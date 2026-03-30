@@ -6,11 +6,8 @@ class LibraryConfig(AppConfig):
     name = 'library'
     
     def ready(self):
-        # Import signal handlers to ensure automatic notifications are wired
-        # when the app registry is ready.
         try:
-            from . import signals  # noqa: F401
+            from . import signals
         except Exception:
-            # Don't let signal import errors break management commands; log to stdout
             import sys
-            print('Warning: could not import library.signals', file=sys.stderr)
+            print('Avertissement : impossible d’importer la bibliothèque signaux.', file=sys.stderr)

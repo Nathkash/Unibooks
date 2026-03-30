@@ -8,13 +8,13 @@ register = template.Library()
 
 @register.simple_tag
 def unhandled_missing_count():
-    """Return the count of MissingRequest objects not yet handled."""
+    """Renvoie le nombre d'objets MissingRequest non encore traités."""
     return MissingRequest.objects.filter(handled_at__isnull=True).count()
 
 
 @register.simple_tag
 def missingrequest_admin_url():
-    """Return the admin changelist URL for MissingRequest."""
+    """Renvoie l'URL de la liste de changement admin pour MissingRequest."""
     try:
         return reverse('admin:library_missingrequest_changelist')
     except Exception:
@@ -23,7 +23,7 @@ def missingrequest_admin_url():
 
 @register.simple_tag
 def pending_borrow_count():
-    """Return the count of BorrowRequest objects that need admin attention (PENDING)."""
+    """Renvoie le nombre d'objets BorrowRequest qui nécessitent une attention administrative (PENDING)."""
     return BorrowRequest.objects.filter(status='PENDING').count()
 
 
@@ -37,7 +37,7 @@ def borrowrequest_admin_url():
 
 @register.simple_tag
 def pending_reservation_count():
-    """Return the count of Reservation objects that may need attention (ACTIVE)."""
+    """Renvoie le nombre d'objets de réservation qui peuvent nécessiter une attention particulière (ACTIVE)."""
     return Reservation.objects.filter(status='ACTIVE').count()
 
 
