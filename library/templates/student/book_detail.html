@@ -4,7 +4,6 @@
 {% block content %}
 <article class="book-detail container">
   <div class="book-detail__inner">
-    <!-- Colonne gauche : couverture -->
     <aside class="book-detail__cover" role="complementary" aria-label="Couverture du livre">
       <figure class="cover-figure">
         {% if book.image %}
@@ -15,7 +14,6 @@
       </figure>
     </aside>
 
-    <!-- Colonne droite : contenu principal -->
     <div class="book-detail__content">
       <header class="book-detail__header">
         <h1 class="book-title">{{ book.title }}</h1>
@@ -63,7 +61,6 @@
 
 <hr class="section-divider">
 
-<!-- Section commentaires (inchangée structurellement, mais s'adapte au nouveau layout) -->
 <section class="comments-section" id="community-comments">
   <header class="comments-header">
     <h3>Commentaires & Discussions</h3>

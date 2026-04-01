@@ -368,7 +368,6 @@ img { max-width:1 00%;
 .filters-bar{ margin-bottom: 2.5rem; }
 .book-grid{ margin-top: 2rem; }
 
-/* BOOK DETAIL: layout, cover framing and like button */
 .book-detail .book-container{ display:flex; gap:1.25rem; align-items:flex-start; }
 .book-detail .left-col{ flex: 0 0 320px; }
 .book-detail .right-col{ flex: 1 1 auto; }
@@ -383,7 +382,6 @@ img { max-width:1 00%;
 .book-detail .book-actions{ margin-top:1rem; }
 .book-detail .buttons-group{ display:flex; gap:0.6rem; align-items:center; }
 
-/* Make like button more visible on book detail page */
 .book-detail .like-btn{ padding:0.5rem 0.7rem; border-radius:10px; font-size:1rem; display:inline-flex; align-items:center; gap:0.5rem; border:1px solid rgba(11,26,43,0.06); background:transparent; transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease; }
 .book-detail .like-btn .fa-heart{ font-size:1.15rem; color:var(--muted); transition: color 160ms ease, transform 160ms ease; }
 .book-detail .like-btn:hover{ transform:translateY(-3px); box-shadow:var(--shadow-sm); }
