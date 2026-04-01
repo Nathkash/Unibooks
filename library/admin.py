@@ -26,7 +26,7 @@ class UserAdmin(BaseUserAdmin):
         # Ajouter de mes informations
         extra = (
             'UniBooks info',
-            {'fields': ('matricule', 'faculty', 'phone', 'address', 'proof_of_payment', 'force_changement_mot_de_passe', 'est_bibliothécaire', 'date_paiement', 'date_expiration')}
+            {'fields': ('matricule', 'faculty', 'phone', 'address', 'proof_of_payment', 'force_password_change', 'is_librarian', 'date_paiement', 'date_expiration')}
         )
         base.append(extra)
         return tuple(base)
@@ -38,7 +38,7 @@ class UserAdmin(BaseUserAdmin):
         }),
     )
 
-    list_display = ('full_name', 'email', 'matricule', 'is_active', 'est_bibliothécaire', 'subscription_end_display')
+    list_display = ('full_name', 'email', 'matricule', 'is_active', 'is_librarian', 'subscription_end_display')
     search_fields = ('first_name', 'last_name', 'matricule', 'email', 'phone')
 
     def full_name(self, obj):

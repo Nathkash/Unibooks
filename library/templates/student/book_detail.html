@@ -2,48 +2,57 @@
 {% block title %}{{ book.title }}{% endblock %}
 
 {% block content %}
-<article class="book-detail">
-  <div class="book-container">
-    <div class="left-col">
-      <figure class="cover-large">
+<article class="book-detail container">
+  <div class="book-detail__inner">
+    <!-- Colonne gauche : couverture -->
+    <aside class="book-detail__cover" role="complementary" aria-label="Couverture du livre">
+      <figure class="cover-figure">
         {% if book.image %}
-          <img src="{{ book.image.url }}" alt="Couverture du livre : {{ book.title }}">
+          <img class="cover-image" src="{{ book.image.url }}" alt="Couverture du livre : {{ book.title }}" loading="lazy">
         {% else %}
           <div class="cover-placeholder">Aucune image disponible</div>
         {% endif %}
       </figure>
-    </div>
+    </aside>
 
-    <div class="right-col">
-      <header class="book-header">
+    <!-- Colonne droite : contenu principal -->
+    <div class="book-detail__content">
+      <header class="book-detail__header">
         <h1 class="book-title">{{ book.title }}</h1>
+
         <div class="book-meta">
-          <span class="authors"><strong>Auteur(s) :</strong> {{ book.authors }}</span>
-          <span class="category-badge">{{ book.category }}</span>
+          <div class="book-authors"><strong>Auteur(s) :</strong> {{ book.authors }}</div>
+          {% if book.category %}
+            <div class="book-category ub-badge ub-badge--muted">{{ book.category }}</div>
+          {% endif %}
         </div>
       </header>
 
-      <section class="book-body">
+      <section class="book-detail__summary card">
         <h3>Résumé</h3>
-        <p class="desc">{{ book.description }}</p>
+        <p class="book-description">{{ book.description|linebreaksbr }}</p>
       </section>
 
-      <section class="book-info-box">
-        <div class="availability" aria-live="polite">
-          <span class="info-label">Disponibilité :</span>
-          <span class="count"><strong>{{ book.available_copies }}</strong> / {{ book.total_copies }}</span>
-          <span class="status-indicator {{ book.status }}">Statut : {{ book.status }}</span>
+      <section class="book-detail__info">
+        <div class="availability card small">
+          <div class="info-row"><span class="info-label">Disponibilité :</span>
+            <span class="count"><strong>{{ book.available_copies }}</strong> / {{ book.total_copies }}</span>
+          </div>
+          <div class="info-row"><span class="status-indicator {{ book.status|lower }}">Statut : {{ book.status }}</span></div>
         </div>
       </section>
 
-      <div class="book-actions">
-        <div class="buttons-group">
+      <div class="book-detail__actions">
+        <div class="buttons-group" role="group" aria-label="Actions livre">
           <a class="ub-btn ub-btn--primary" href="{% url 'student:request_reserve' book.pk %}">Réserver</a>
           <a class="ub-btn ub-btn--primary" href="{% url 'student:request_borrow' book.pk %}">Demander l'emprunt</a>
 
-          {# Render the same heart icon always; toggle 'liked' class to change color only #}
-          <a class="ub-btn ub-btn--outline like-btn {% if liked %}liked{% endif %}" href="{% url 'student:like_book' book.pk %}" title="{% if liked %}Retirer des favoris{% else %}Ajouter aux favoris{% endif %}">
-            <i class="fa-regular fa-heart" aria-hidden="true"></i>
+          <a
+            class="ub-btn ub-btn--outline like-btn {% if liked %}liked{% endif %}"
+            href="{% url 'student:like_book' book.pk %}"
+            title="{% if liked %}Retirer des favoris{% else %}Ajouter aux favoris{% endif %}"
+            aria-pressed="{% if liked %}true{% else %}false{% endif %}">
+            <i class="{% if liked %}fa-solid{% else %}fa-regular{% endif %} fa-heart" aria-hidden="true"></i>
             <span class="visually-hidden">{% if liked %}Retirer des favoris{% else %}Ajouter aux favoris{% endif %}</span>
           </a>
         </div>
@@ -54,6 +63,7 @@
 
 <hr class="section-divider">
 
+<!-- Section commentaires (inchangée structurellement, mais s'adapte au nouveau layout) -->
 <section class="comments-section" id="community-comments">
   <header class="comments-header">
     <h3>Commentaires & Discussions</h3>

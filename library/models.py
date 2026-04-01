@@ -14,8 +14,8 @@ class User(AbstractUser):
     address = models.TextField(_('adresse'), blank=True)
     proof_of_payment = models.FileField(_('preuve de paiement'), upload_to='proofs/', blank=True, null=True)
     avatar = models.ImageField(_('avatar'), upload_to='avatars/', blank=True, null=True)
-    force_changement_mot_de_passe = models.BooleanField(_('forcer changement mot de passe'), default=False)
-    est_bibliothécaire = models.BooleanField(_('personnel bibliothèque'), default=False)
+    force_password_change = models.BooleanField(_('forcer changement mot de passe'), default=False)
+    is_librarian = models.BooleanField(_('personnel bibliothèque'), default=False)
     date_paiement = models.DateTimeField(_('date de paiement'), null=True, blank=True, help_text=_('Date et heure du paiement (format UTC)'))
     date_expiration = models.DateTimeField(_('date d\'expiration'), null=True, blank=True, editable=False)
 
